@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Complex icons</title>
+    <style>
+        html, body, #map-canvas {
+            height: 100%;
+            margin: 0px;
+            padding: 0px;
+        }
+    </style>
+    <script src="/jquery-1.10.2.min.js"></script>
+    <script src="http://ditu.google.cn/maps/api/js?sensor=false" type="text/javascript"></script>
+
+    <script>
+        var map;
+        var lat = 23.144621879424374;
+        var lng = 112.81577110290527;
+
+        var myLatlng = new google.maps.LatLng(lat, lng);
+
+
+        //添加一个标记
+        function addMarker(lat, lng, title) {
+            var LatLng = new google.maps.LatLng(lat, lng);
+            var marker = new google.maps.Marker({
+                map: map,
+                position: LatLng,
+                title: title
+            });
+            return marker;
+        }
+
+        function LatLng(lat, lng) {
+            return {
+                lat: lat,
+                lng: lng
+            };
+        }
+
+        //线条选项
+        function lineOption() {
+            var lineOption = {
+                strokeColor: "#FF0000",
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                coordinates: []
+            };
+            return lineOption;
+        }
+
+        //画线
+        function addLine(lineOption) {
+            var linecoordinates = [];
+            for (var i = 0; i < lineOption.coordinates.length; i++) {
+                linecoordinates.push(new google.maps.LatLng(lineOption.coordinates[i].lat, lineOption.coordinates[i].lng));
+            }
+
+            //显示线
+            var line = new google.maps.Polyline({
+                path: linecoordinates,
+                strokeColor: lineOption.strokeColor,
+                strokeOpacity: lineOption.strokeOpacity,
+                strokeWeight: lineOption.strokeWeight,
+                map: map
+            });
+            return line;
+        }
+
+        var MarkerId = 1;
+        //初始化谷歌地图
+        function initialize() {
+            //设置地图中心
+            var mapOptions = {
+                zoom: 12,
+                center: myLatlng
+            }
+            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+            //google.maps.event.addListener(map, 'click', function (e) {
+            //    var str = $("#position").html();
+            //    var MID = MarkerId++;
+            //    addMarker(e.latLng.lat(), e.latLng.lng(), MID);
+            //    $("#position").html(str + " " + MID + " " + e.latLng.lat() + " " + e.latLng.lng() + "<br/>");
+            //});
+
+            $.ajax({
+                url: "/Home/GetAllNodes",
+                dataType: "json",
+                type: "post",
+                success: function (data) {
+                    for (var i = 0; i < data.length; i++)
+                    {
+                        addMarker(data[i].Lat, data[i].Lng, data[i].Id);
+                    }
+                }
+            })
+
+            $.ajax({
+                url: "/Home/GetWaterWay",
+                dataType: "json",
+                type: "post",
+                data:{
+                    StartNodeId: "1",
+                    EndNodeId: "9"
+                },
+                success: function (data) {
+                    var lo = lineOption();
+                    lo.strokeWeight = 4;
+                    lo.strokeColor = "Green";
+                    lo.strokeOpacity = 0.8;
+                    //用返回的路线画线
+                    for (var i = 0; i < data.length; i++)
+                    {
+                        lo.coordinates.push(LatLng(data[i].Lat, data[i].Lng));
+                    }
+                    addLine(lo);
+                }
+            })
+        }
+
+        //监听页面事件，当页面加载完毕，加载谷歌地图
+        google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+</head>
+<body>
+    <div id="map-canvas" style="height:600px;"></div>
+    <div id="position"></div>
+</body>
+</html>

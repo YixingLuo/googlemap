@@ -1,0 +1,104 @@
+<!DOCTYPE HTML>
+<html lang="zh-ch">
+<head>
+    <title>谷歌地图</title>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no,maximum-scale=1" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+    <script
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD7N9eg_xPJIZL5NtRKR91tvwBXd1CDwjk&callback=initMap">
+</script>
+    <script src="map.js" type="text/javascript"></script>
+    <script>
+        var newMap = {a:{},b:{name:"目的地"}}; //全局变量
+        newMap.directionsDisplay = {};
+        newMap.directionsService = new google.maps.DirectionsService(); //这两个是在导航的时候用到的
+        //初始化地图
+        function initMap(mapCenter) {
+            newMap.directionsDisplay = new google.maps.DirectionsRenderer();
+        var myOptions = {
+        zoom:10,
+        mapTypeId: google.maps.MapTypeId.ROADMAP, //地图类型
+        center: mapCenter   //LatLng 对象
+        }
+        newMap.map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+        newMap.directionsDisplay.setMap(newMap.map); }
+
+        //导航方法
+        function calcRoute(start,end) {
+        var request = {
+        origin:start,  //开始的位置 （A）
+        destination:end, //开始的位置 （B）
+        travelMode: google.maps.TravelMode.DRIVING   //导航类型 驾驶
+        };
+        newMap.directionsService.route(request, function(result, status) {
+        if (status == google.maps.DirectionsStatus.OK) {
+            directionsDisplay.setDirections(result);
+        }
+        });
+        }
+
+        function getLatLng(){
+
+        if( navigator.geolocation ) {
+        function gpsSuccess(pos){
+
+            if( pos.coords ){
+                newMap.a.lat = pos.coords.latitude;
+                newMap.a.lng = pos.coords.longitude;
+            }
+            else{
+                newMap.a.lat = pos.latitude;
+                newMap.a.lng = pos.longitude;
+            }
+            var userPositon = new google.maps.LatLng(newMap.a.lat,newMap.a.lng);
+            var crsPositon = new google.maps.LatLng(newMap.b.lat,newMap.b.lng);
+            initMap(userPositon);
+            calcRoute(userPositon,crsPositon);
+            addMarker(crsPositon,newMap.map,newMap.b.name);
+            addMarker(userPositon,newMap.map, "您当前位置");
+        }
+        function gpsFail(){
+
+            alert('无法获取您的地理位置信息');
+            var obj = new google.maps.LatLng(newMap.b.lat,newMap.b.lng);
+            initMap(obj);
+            addMarker(obj,newMap.map, newMap.b.name);
+        }
+        navigator.geolocation.getCurrentPosition(gpsSuccess, gpsFail, {enableHighAccuracy:true, maximumAge: 3000000,timeout:20*1000});
+        }
+        }
+
+        //向地图上添加某地标识
+function addMarker(location,map,contentString) {
+    var marker = new google.maps.Marker({
+        position: location,
+        'draggable': false,
+        'animation': google.maps.Animation.DROP,
+        map: map
+    });
+    var infowindow = new google.maps.InfoWindow({
+        content: contentString
+    });
+    google.maps.event.addListener(marker, 'click', function(){
+        infowindow.open(map,marker);
+    });
+    }
+
+    </script>
+    <style>
+        #map_canvas{
+          position: absolute;
+            left: 0;
+            top:0;
+            height:50%;
+            width:50%;
+            background: #fff8dc;
+        }
+    </style>
+</head>
+<body>
+<div id="map_canvas">
+</div>
+</body>
+</html>
